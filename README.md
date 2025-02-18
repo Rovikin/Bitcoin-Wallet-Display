@@ -191,7 +191,7 @@ Dan seperti inilah contoh hasilnya:
 
 ### Dukungan dan Ucapan terimakasih
 
-Project ini ditujukan untuk eksperimen, dan untuk memperkenalkan lebih luas penggunaan wallet non custodial dan open source dari [Github resmiELECTRUM](https://github.com/spesmilo/electrum)
+Project ini ditujukan untuk eksperimen, dan untuk memperkenalkan lebih luas penggunaan wallet non custodial dan open source dari [Github resmi ELECTRUM](https://github.com/spesmilo/electrum)
 Ucapan terimakasih yang sebesar-besarnya kepada pengembang [Electrum](https://www.electrum.org).
 
 Dukungan dan saran sangat terbuka demi pembaruan yang lebih baik.
