@@ -4,7 +4,7 @@ Ini adalah kode python yang saya buat khusus untuk menampilkan saldo (UTXO), dan
 
   Kode python ini berdasarkan paket electrum-cli yang tersedia di termux. Untuk menggunakannya, ada beberapa dependensi yang perlu diinstall.
 
-    Berikut ini adalah langkah-langkahnya:
+Berikut ini adalah langkah-langkahnya:
 
 ## Menginstall termux di perangkat android.
 
