@@ -61,7 +61,7 @@ alias btc='cd ~/Bitcoin-Wallet-Display && python btc.py'
 alias cmc='cd ~/Bitcoin-Wallet-Display && ./cmc'
 alias mem='cd ~/Bitcoin-Wallet-Display && ./mem'
 ```
- Setelah itu, sama seperti file config.json tadi, ketik CTRL +x kemudian y lalu enter
+ Setelah itu, sama seperti file config.json tadi, ketik CTRL + x kemudian y lalu enter
 File .bashrc sudah tersimpan. Untuk membuatnya berfungsi, jalankan perintah:
 
 ```
