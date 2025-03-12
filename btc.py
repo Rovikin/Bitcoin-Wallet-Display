@@ -1,6 +1,7 @@
 import subprocess
 import json
 import time
+import requests
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -8,12 +9,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 console = Console()
 
 def run_electrum_command(command):
+    """Menjalankan perintah Electrum dan menangani output/error."""
     try:
         result = subprocess.run(
-            command,
-            shell=True,
-            text=True,
-            capture_output=True
+            command, shell=True, text=True, capture_output=True
         )
         if result.returncode != 0:
             return f"Error: {result.stderr.strip()}"
@@ -22,6 +21,7 @@ def run_electrum_command(command):
         return f"Error: {e}"
 
 def get_balance_in_btc(balance_data):
+    """Mengambil saldo BTC (terkonfirmasi & belum terkonfirmasi) dari JSON Electrum."""
     try:
         balance_data = json.loads(balance_data)
         confirmed = float(balance_data.get("confirmed", 0))
@@ -31,6 +31,7 @@ def get_balance_in_btc(balance_data):
         return 0.0, 0.0
 
 def get_transaction_history():
+    """Mengambil riwayat transaksi dari Electrum."""
     history = run_electrum_command("electrum onchain_history")
     try:
         history_data = json.loads(history)
@@ -40,19 +41,21 @@ def get_transaction_history():
         return []
 
 def get_btc_price_idr():
+    """Mengambil harga BTC ke IDR dari CoinGecko."""
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {"ids": "bitcoin", "vs_currencies": "idr"}
+
     try:
-        response = subprocess.run(
-            "curl -s https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=idr",
-            shell=True,
-            text=True,
-            capture_output=True
-        )
-        price_data = json.loads(response.stdout)
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()  # Pastikan tidak ada error HTTP
+        price_data = response.json()
         return price_data.get("bitcoin", {}).get("idr", 0)
-    except (json.JSONDecodeError, ValueError):
+    except requests.exceptions.RequestException as e:
+        console.print(f"[bold red]Error fetching BTC price: {e}[/bold red]")
         return 0
 
 def display_wallet_info(address, confirmed_balance, unconfirmed_balance, btc_price_idr, transactions):
+    """Menampilkan informasi wallet dalam tabel Rich."""
     subprocess.run("clear", shell=True)
 
     table = Table(title="Bitcoin Wallet Info", show_header=True, header_style="bold magenta", show_lines=True)
@@ -81,63 +84,40 @@ def display_wallet_info(address, confirmed_balance, unconfirmed_balance, btc_pri
     console.print(table)
 
 def main():
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    """Fungsi utama untuk menampilkan informasi wallet."""
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Starting Electrum daemon...", total=None)
         subprocess.run("electrum daemon -d", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(2)
 
-    console.print("[bold yellow]Electrum is requesting your password...[/bold yellow]")
-    run_electrum_command("electrum load_wallet")
-    console.print("[green]Wallet loaded successfully![/green]")
+    console.print("[bold yellow]Electrum is requesting your password...[/bold yellow]")  
+    run_electrum_command("electrum load_wallet")  
+    console.print("[green]Wallet loaded successfully![/green]")  
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Fetching unused address...", total=None)
         address = run_electrum_command("electrum getunusedaddress")
         time.sleep(1)
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Fetching balance...", total=None)
         balance = run_electrum_command("electrum getbalance")
         confirmed_balance, unconfirmed_balance = get_balance_in_btc(balance)
         time.sleep(1)
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Fetching BTC price in IDR...", total=None)
         btc_price_idr = get_btc_price_idr()
         time.sleep(1)
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Fetching transaction history...", total=None)
         transactions = get_transaction_history()
         time.sleep(1)
 
     display_wallet_info(address, confirmed_balance, unconfirmed_balance, btc_price_idr, transactions)
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         progress.add_task("[cyan]Stopping Electrum daemon...", total=None)
         subprocess.run("electrum stop", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(2)
